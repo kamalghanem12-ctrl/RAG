@@ -9,8 +9,12 @@
 secrets/
 **/secrets*
 
-# Claude Code local-only files (hookify rules are local by convention)
+# Claude Code local-only files.
+# Hookify rules are deliberately NOT ignored: they are security controls, not
+# personal preference. If only one engineer's machine has them they enforce
+# nothing. See .claude/README.md.
 .claude/*.local.md
+!.claude/hookify.*.local.md
 .claude/settings.local.json
 
 # Python

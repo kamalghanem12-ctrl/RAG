@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "derayah-rag"
+version = "0.0.0"
+description = "Permission-aware Enterprise RAG platform"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff", "mypy"]
+
+# Phase 1 adds the real dependency set. Versions are pinned there, and each
+# pinned component needs a baseline under docs/baselines/ (rule R1).
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+  "integration: requires a live PostgreSQL instance",
+]
+# xfail_strict: an unexpectedly passing test is a failure, not a pass. The authz
+# matrix is written against the Phase 2 interface; if one passes while the
+# predicate is unimplemented, it is asserting something weaker than it should.
+xfail_strict = true
+
+[tool.ruff]
+line-length = 100
+src = ["src", "tests"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+files = ["src"]

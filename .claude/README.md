@@ -36,6 +36,11 @@ Its hooks shell out to `python3`. **Verify that `python3 --version` returns a re
 Windows it often resolves to the Microsoft Store alias stub, in which case the hooks fail and every
 rule here is silently inert. A rule that does not fire is not a rule.
 
+> Checked 2026-08-14 on the authoring machine: `python3` → Python 3.12.10 (a real interpreter,
+> symlinked from the Store package, not the alias stub). Note this is a *different* interpreter
+> from `python` (3.13). Re-check on each engineer's machine — this is per-machine state, not
+> repository state, and it is the single point where the whole tier-3 layer can fail silently.
+
 Check what is live:
 
 ```

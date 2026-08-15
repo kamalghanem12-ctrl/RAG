@@ -50,6 +50,33 @@ The platform's `Internal` / `Restricted` tiers must be mapped to Derayah's own c
 scheme. If Derayah's scheme has more levels, the two-tier model is insufficient and the data model
 changes — which is a Phase 2 impact, not a Phase 10 one.
 
+**Recorded 2026-08-14: Derayah has no data-classification scheme at present.** This is a factual
+answer to the question above, not a determination that none is required. It has two consequences
+that compliance and security must weigh:
+
+- The two-tier model maps onto nothing. `Internal` and `Restricted` are currently definitions this
+  platform invents, derived from FileCloud folder paths — see `0002-acl-source-of-truth.md`. Whether
+  that is an acceptable basis for an access-control tier in a regulated institution is a governance
+  question.
+- **No document carries a label marking it as non-exportable.** There is therefore no mechanism, on
+  either retrieval path, by which the platform could recognize content that must not leave the
+  estate. Any such rule would have to be expressed some other way.
+
+If a scheme is later issued, it is a re-review trigger for this ADR, the data model, and
+`0011-filecloud-mcp-scope.md`.
+
+### The FileCloud MCP widens the egress surface
+
+`0011-filecloud-mcp-scope.md` adds a second path from Derayah content to Claude, with a materially
+different profile: the RAG path sends curated, indexed, permission-filtered chunks, while the
+FileCloud MCP can send **any file the user can open**, including personal working files never
+intended for the knowledge base.
+
+Every residency and cross-border question above therefore applies to that path too, over a wider
+corpus and without an ingestion stage at which anything could be excluded. The audit question below
+applies with particular force: local desktop reads produce no server-side record unless the MCP is
+built to create one.
+
 ### Audit and evidence
 
 What must be retained, for how long, and in what form, to satisfy an internal-audit or regulator

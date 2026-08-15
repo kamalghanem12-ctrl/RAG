@@ -22,14 +22,46 @@ inconsistent, stop and explain before implementing it.
 **Do not advance** until the current phase has: architecture validation · tests · security
 validation · documented decisions · known failure behavior.
 
-## Phases
+## Two tracks
+
+**Track A — the Enterprise RAG platform.** Phases 0–12 below. Sequential, and Phase 2 gates
+everything after it.
+
+**Track B — the FileCloud MCP.** A separate capability: live, per-user access to the user's own
+FileCloud repository, available to users with no RAG access at all. Design:
+`../architecture/09-filecloud-mcp.md`. Decision: `../adr/0011-filecloud-mcp-scope.md`.
+
+Track B **does not depend on the Phase 2 authorization core**, because it implements no
+authorization of its own — it inherits FileCloud's. It is therefore not blocked by the five ADRs in
+security, identity, and compliance review, and is the one piece of user-facing capability
+deliverable while those sit with reviewers.
+
+That independence is a scheduling fact, not a licence. Track B needs its own gate:
+
+> **Do not start Track B implementation until ADR-0011 is ratified.** The question it asks — should
+> an external AI service reach an employee's private FileCloud content — is a governance decision,
+> and the answer may be no. Its `VERIFY` markers and the provisional
+> `../baselines/filecloud.md` must also be resolved, which needs the deployed FileCloud version.
+
+Track B stages, once unblocked:
+
+| Stage | Content |
+|---|---|
+| B1 | Desktop-backed MCP: client-root discovery, path jail, local index, the four capability tools, local audit logging |
+| B2 | API-backed MCP. **Conditional** — exists only if FileCloud offers a supported password-free user-delegated authentication path. Needs its own ADR if it does |
+
+The two tracks share no credential, session, or process identity
+(`../architecture/01-trust-boundaries.md`).
+
+## Phases — Track A
 
 ### Phase 0 — Architecture Validation ← current
 Inspect repository · validate architecture · identify gaps · produce ADRs · confirm component
 contracts.
 
-Status: ADRs 0001–0010 drafted in `../adr/`. Five need Derayah review before Phase 2 can proceed.
-The trust-boundary table in `../architecture/01-trust-boundaries.md` is still outstanding.
+Status: ADRs 0001–0011 drafted in `../adr/`. Six need Derayah review; five of those block Phase 2.
+The trust-boundary table in `../architecture/01-trust-boundaries.md` is complete, with rows marked
+**OPEN** where they depend on an unratified ADR.
 
 ### Phase 1 — Project Foundation
 Repository structure · container/runtime structure · configuration management · logging · health

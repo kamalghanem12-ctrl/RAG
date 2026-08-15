@@ -51,6 +51,9 @@ which is the LLM. Defining any of these is a blocked pattern.
 
 Two different capabilities. They must not share or bypass one another's authorization boundaries.
 
+> Full design for the FileCloud side: `09-filecloud-mcp.md`. Decision and rationale:
+> `../adr/0011-filecloud-mcp-scope.md`. The summary below is the contrast; that file is the detail.
+
 | | FileCloud MCP | Enterprise RAG MCP |
 |---|---|---|
 | Purpose | Live repository operations | Semantic enterprise search |

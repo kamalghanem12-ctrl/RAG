@@ -40,10 +40,24 @@ being domain-joined never by itself grants backend access.
 would arrive as the same service principal, making per-user authorization impossible — and places a
 long-lived privileged credential in client configuration.
 
+## Environment fact, recorded 2026-08-14
+
+Derayah's workstation fleet is **domain-joined, with a known set of excluded laptops**.
+
+This is evidence, not a decision. It bears directly on the option set: Option A alone would leave
+the excluded laptops with no path at all, since a broker acquisition needs a PRT. Option C covers
+both populations by construction, which makes the fallback a production requirement rather than the
+developer convenience it was described as below.
+
+Still to establish: how many devices are excluded, why, and whether they are expected to use this
+platform at all. If they are out of scope for the RAG platform entirely, the fallback's role
+narrows again.
+
 ## Recommendation
 
 **Option C.** Broker-first gives the best security properties and the silent experience on the
-population that matters; PKCE fallback keeps developers unblocked without weakening production.
+population that matters; PKCE fallback keeps developers unblocked without weakening production —
+and, per the fact above, is also what covers the excluded laptops.
 
 This is a recommendation. The decision belongs to Derayah's identity owners.
 

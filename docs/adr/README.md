@@ -3,7 +3,7 @@
 Every ADR here is **Proposed**. None is Accepted. Recommendations in them are engineering
 recommendations, not decisions and not approvals.
 
-Five require named Derayah owners to sign off before code may depend on them. Never record an
+Six require named Derayah owners to sign off before code may depend on them. Never record an
 approval that has not actually been given.
 
 | ADR | Decision | Status | Blocks |
@@ -18,6 +18,7 @@ approval that has not actually been given.
 | [0008](0008-regulatory-scope.md) | Regulatory scope | Proposed — **needs compliance review** | Phase 0 |
 | [0009](0009-entitlement-claims.md) | Entra app roles vs. security groups | Proposed — **needs identity review** | Phase 2 |
 | [0010](0010-entitlement-invariants.md) | Entitlement invariants | Proposed — **needs security review** | Phase 2 |
+| [0011](0011-filecloud-mcp-scope.md) | FileCloud MCP scope and credential model | Proposed — **needs security review** | FileCloud MCP track |
 
 ## `VERIFY` markers
 

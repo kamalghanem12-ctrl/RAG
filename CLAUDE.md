@@ -12,6 +12,11 @@ Not a PoC, demo, or prototype. Treat every change as production-bound.
 the intended toolchain and are not yet runnable; this section is updated as each phase lands, and
 a command listed here is expected to work. See `docs/delivery/phases.md` for the phase gates.
 
+There are **two tracks**. Track A is the RAG platform, Phases 0–12. Track B is the **FileCloud
+MCP** — live per-user access to the user's own FileCloud repository, working even for users with no
+RAG access. Track B implements no authorization of its own; it inherits FileCloud's, which is what
+keeps it off Phase 2's critical path. It has its own gate: ADR-0011 must be ratified first.
+
 ## Commands
 
 ```bash
@@ -50,6 +55,8 @@ src/derayah_rag/
   db/           SQLAlchemy models, Alembic migrations, RLS policies.
   mcp/          MCP server — the controlled AI tool interface.
 shim/           MCP shim shipped to Windows desktops. Lightweight; no authz model.
+filecloudmcp/   Track B. Local MCP over the user's own FileCloud content. Holds no
+                credentials and never a service account. See docs/adr/0011.
 tests/authz/    The authorization matrix. Blocks production readiness.
 docs/           Architecture, ADRs, security, baselines. Read these before designing.
 deploy/         Container and local-dev definitions.
@@ -98,7 +105,7 @@ the edit — that is intentional, not a bug to work around.
   silently redesign.
 - **Push math into SQL** — byte conversions, percentages, ranking, aggregation. Not into Python
   glue, and never into model prose.
-- **Open questions are ADRs, not decisions.** `docs/adr/` currently holds ten. Several need
+- **Open questions are ADRs, not decisions.** `docs/adr/` currently holds eleven. Several need
   Derayah security, identity, or compliance sign-off before code depends on them. Never record an
   approval that has not actually been given.
 
@@ -114,6 +121,7 @@ the edit — that is intentional, not a bug to work around.
 | FileCloud ingestion, BGE-M3 | `docs/architecture/04-ingestion.md` |
 | Retrieval and reranking | `docs/architecture/05-retrieval.md` |
 | MCP server and shim | `docs/architecture/06-mcp.md` |
+| **FileCloud MCP (Track B)** | `docs/architecture/09-filecloud-mcp.md` |
 | API design | `docs/architecture/07-api.md` |
 | Secrets, observability, operations | `docs/architecture/08-operations.md` |
 | Threat model | `docs/security/threat-model.md` |

@@ -1,0 +1,31 @@
+# Secrets — never commit (CLAUDE.md §21, Delinea PAM is the source of truth)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.pfx
+*.p12
+secrets/
+**/secrets*
+
+# Claude Code local-only files (hookify rules are local by convention)
+.claude/*.local.md
+.claude/settings.local.json
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+dist/
+build/
+
+# Local dev
+.vscode/
+.idea/
+*.log

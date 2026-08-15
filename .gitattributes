@@ -1,0 +1,7 @@
+# Normalize line endings. Dev is Ubuntu/RHEL, the MCP shim ships to Windows —
+# without this the shim's files churn between CRLF and LF on every commit.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.pdf binary

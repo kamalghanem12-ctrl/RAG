@@ -55,6 +55,15 @@ reranking · **pgvector iterative scans where selective ACL filters could cause 
 
 ## Recall starvation under selective ACL filters
 
+> **Escalated** by `../adr/0012-filecloud-acl-authoritative.md`. This was a Phase 7 evaluation
+> question under the department model. Under per-user ACL filters it is a **first-order design risk
+> that must be settled during Phase 6 index design.**
+>
+> The difference is arithmetic. A department filter partitioned the corpus into roughly as many
+> buckets as there are departments — each one a large fraction of the whole. A per-user ACL filter
+> can match a few dozen documents out of hundreds of thousands. That is the regime where filtered
+> ANN stops working, not the regime where it needs tuning.
+
 With an HNSW index and a highly selective ACL predicate, an ANN search can return **fewer rows than
 `LIMIT`, or none at all** — the index walk exhausts its candidate list before finding enough rows
 the user may read.
@@ -66,6 +75,18 @@ the natural "fix" under pressure is to widen the filter.
 Required: iterative-scan configuration plus a **minimum-recall guard that logs** when a query
 returns fewer authorized candidates than requested, so starvation is observable rather than
 inferred. → `../adr/0005-ann-recall-under-acl.md`
+
+### Directions to evaluate in Phase 6, not decided here
+
+- A materialized `allowed_principals` array on the chunk with a GIN index, so the filter is an index
+  operation rather than a join
+- Partitioning by principal set, where the estate has a small number of recurring access shapes
+- Pre-filtering to a candidate document set, then vector search within it
+- Higher `ef_search` with a measured recall floor per selectivity band
+
+Each trades write amplification, index size, or latency differently, and the right answer depends on
+the real shape of Derayah's ACLs — how many distinct principal sets exist across the corpus. That
+shape is currently unknown and is the first thing to measure once the projection holds real data.
 
 ## Never trade security for retrieval performance
 

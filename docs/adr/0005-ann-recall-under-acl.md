@@ -1,7 +1,20 @@
 # ADR-0005 — ANN Recall Under Selective ACL Filters
 
-**Status:** Proposed
-**Blocks:** Phase 7
+**Status:** Proposed — **escalated** by `0012-filecloud-acl-authoritative.md`
+**Blocks:** **Phase 6** (index design) and Phase 7
+
+> **Escalation.** Under the retired department model, the ACL filter partitioned the corpus into
+> roughly as many buckets as there are departments — each a large fraction of the whole — and this
+> was a Phase 7 evaluation question. ADR-0012 replaces that with **per-user** ACL filters, which can
+> match a few dozen documents out of hundreds of thousands.
+>
+> That is not the same question at a different scale. It is the selectivity regime where filtered ANN
+> stops working rather than merely needing tuning, and it must be settled during Phase 6 index design
+> instead of discovered during Phase 7 evaluation. This is the largest technical risk in ADR-0012.
+>
+> Directions to evaluate are listed in `../architecture/05-retrieval.md`. The deciding input is the
+> real shape of Derayah's ACLs — how many *distinct principal sets* exist across the corpus — which
+> is currently unknown and is the first thing to measure once the projection holds real data.
 
 ## Context
 

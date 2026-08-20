@@ -1,7 +1,22 @@
 # ADR-0009 — How Entitlements Are Carried From Entra
 
-**Status:** Proposed — **needs Derayah identity review**
-**Blocks:** Phase 2
+**Status:** **Largely dissolved** by `0012-filecloud-acl-authoritative.md`. Retained because its
+failure mode relocated rather than disappeared
+**Blocks:** nothing directly — the surviving concern moved to `0013-principal-mapping.md`
+
+> **What changed.** ADR-0012 makes FileCloud authoritative for document permissions, so Entra no
+> longer carries `restricted_entitlements`. The question this ADR asked — app roles versus security
+> groups as the carrier — no longer has an authorization decision resting on it.
+>
+> **What did not change.** The groups-overage failure mode described below is still real, and it is
+> still in the architecture. It moved from the *request path* to the *sync path*: group expansion in
+> the ACL synchronization service must enumerate membership, and a truncated or partial membership
+> list silently narrows document access exactly as a truncated claim would have.
+>
+> Sync is a better place for it — batch work can page, retry, and fail loudly without failing a
+> user's query — but "better place" is not "solved". The analysis in this file transfers, and
+> `tests/authz/test_groups_overage.py` is retained and re-aimed at expansion rather than retired.
+> See `0013-principal-mapping.md`, which carries the surviving decision.
 
 ## Context
 

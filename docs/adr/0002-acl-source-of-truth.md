@@ -1,7 +1,20 @@
 # ADR-0002 — FileCloud ACL vs. Path-Derived Tier: Which Is Authoritative?
 
-**Status:** Proposed — **needs Derayah security review**
-**Blocks:** Phase 2, Phase 3
+**Status:** **Superseded** by `0012-filecloud-acl-authoritative.md`, which resolves this as
+**Option B**
+**Blocks:** nothing further — retained as the record of the question and the options considered
+
+> **Resolution.** ADR-0012 selects Option B: the FileCloud ACL is authoritative and the path-derived
+> tier model is retired as an access control. This ADR recommended Option A; that recommendation was
+> not adopted. The reason is capability rather than a defect in Option A — the
+> `(department, sub_department, security_tier)` model can express organizational shape but cannot
+> express a grant to one named person, an inherited folder permission, a group grant, or a
+> documented exception.
+>
+> ADR-0012 requires the same security and information-governance ratification this ADR called for,
+> and has not received it. The "Open" questions at the end of this file carry forward to ADR-0012
+> unchanged: the acceptable reconciliation lag for a tightened ACL, and whether FileCloud exposes ACL
+> change events or must be polled.
 
 ## Context
 

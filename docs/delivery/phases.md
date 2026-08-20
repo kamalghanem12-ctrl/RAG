@@ -68,8 +68,16 @@ Repository structure · container/runtime structure · configuration management 
 checks · CI/CD foundations · secure dependency management.
 
 ### Phase 2 — Identity and Authorization Foundation
-Entra integration · token validation · authorization context · policy model ·
-Department/Internal/Restricted rules · PostgreSQL RLS · authorization tests.
+Entra integration · token validation · **principal resolution and `principal_map`** · **FileCloud
+ACL projection schema** · **group expansion** · **RAG exception store** · PostgreSQL RLS ·
+authorization tests.
+
+> **Revised** by `../adr/0012-filecloud-acl-authoritative.md`. Entra authenticates; FileCloud decides
+> document access. The department/sub-department/security-tier rules are retired as an access
+> control. Current state, migration steps, and rollback: `migration-filecloud-acl.md`.
+>
+> Three ADRs gate this phase and none is ratified: **0012** (security and information governance),
+> **0013** (identity), **0014** (security — carries one open finding).
 
 > **Do not proceed until Phase 2 is validated.** This is the gate everything downstream rests on.
 > `pytest tests/authz` moving from `xfail` to green is the objective signal.

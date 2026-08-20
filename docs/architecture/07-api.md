@@ -6,23 +6,34 @@ The API layer is the **primary application-level policy enforcement point**.
 
 ## Responsibilities
 
-Authentication validation · authorization · RBAC / ABAC · identity and claims validation ·
-department isolation · restricted entitlement evaluation · request validation · rate limiting ·
-audit logging · security policy enforcement · calling controlled RAG operations.
+Authentication validation · authorization · identity and claims validation · **principal resolution
+against the FileCloud ACL projection** · request validation · rate limiting · audit logging ·
+security policy enforcement · calling controlled RAG operations.
+
+> Revised by `../adr/0012-filecloud-acl-authoritative.md`. The API no longer evaluates department
+> isolation or restricted entitlements — it resolves *who the caller is* and lets the projection and
+> RLS resolve what that entitles them to. See `02-authorization-model.md`.
 
 ## Never trust client-supplied
 
 ```text
-department        allowed_groups      roles
-sub_department    allowed_users       permissions
-security_tier
+principal_id              exception_id      allowed_groups
+filecloud_principal_id    exception_scope   allowed_users
+grant / grants            exception_effect  roles / permissions
 ```
 
-These are derived server-side from validated identity. A request may carry a search query and
-legitimate business filters; it may never carry an authorization value. Supplied authorization
-parameters are ignored, validated away, or rejected — never honored.
+These are derived server-side from validated identity, or from the governed exception store. A
+request may carry a search query and legitimate business filters; it may never carry an
+authorization value. Supplied authorization parameters are ignored, validated away, or rejected —
+never honored.
 
 Reading any of these off a request body is a blocked pattern.
+
+**`department`, `sub_department`, and `security_tier` are now metadata, not authorization.** A client
+may legitimately send them as business filters — "search only Commercial documents" — and the API
+may honor that as a *narrowing* filter. It must never widen access: applying a metadata filter can
+only reduce the authorized result set, never add to it. The authorization predicate runs regardless
+of what filters the client sent.
 
 ## Endpoints are capabilities, not authorization
 
@@ -55,8 +66,14 @@ any more than by changing a body field.
 
 `GET /api/v1/knowledge/source/{document_id}` for a document the user may not read must be
 indistinguishable from the same request for a document that does not exist. Otherwise the endpoint
-becomes an existence oracle: an attacker enumerates document IDs and learns what exists in
-departments they cannot read.
+becomes an existence oracle: an attacker enumerates document IDs and learns what exists in parts of
+the estate they cannot read.
+
+This is more load-bearing under the ACL model than it was under the department model. Where a
+department-scoped denial leaked one bit about a whole department, per-document ACLs mean each denial
+leaks one bit about one specific document — so an enumeration attack maps the corpus at document
+granularity. An error that names the document, or a citation that leaks its title or path, is the
+whole vulnerability.
 
 The same applies to citations — titles and paths leak document existence even when content is
 withheld. → `../adr/0006-deny-vs-notfound.md`

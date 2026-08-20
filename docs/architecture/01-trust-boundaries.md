@@ -82,7 +82,7 @@ becomes invisible.
 | | |
 |---|---|
 | Authentication | The authoritative token validation point. Same checks as boundary 4, independently performed — not inherited |
-| Authorization | **The Policy Enforcement Point.** Builds the authorization context server-side from validated claims. Client-supplied `department`, `sub_department`, `security_tier`, `allowed_groups`, `allowed_users`, `roles`, `permissions` are never read → CLAUDE.md rule 3 |
+| Authorization | **The Policy Enforcement Point.** Resolves the caller's principal server-side from validated claims, then queries the FileCloud ACL projection. Client-supplied `principal_id`, `filecloud_principal_id`, grant or exception fields are never read → CLAUDE.md rule 3, `../adr/0012-filecloud-acl-authoritative.md` |
 | Encryption | TLS terminated here; onward hops re-encrypted |
 | Input validation | Full request-body validation. Authorization-bearing fields in a body are rejected, not ignored silently |
 | Output validation | Only authorized rows can be present — nothing is filtered out here, because nothing unauthorized was ever fetched → CLAUDE.md rule 4 |
@@ -94,11 +94,11 @@ becomes invisible.
 | | |
 |---|---|
 | Authentication | Entra ID is authoritative for user identity. Its signing keys are the trust root |
-| Authorization | Entitlements derived from validated claims. Carrier mechanism **OPEN** → `../adr/0009-entitlement-claims.md` (app roles vs. groups) |
+| Authorization | **None derived here any more.** Entra establishes identity only; document access comes from the FileCloud projection → `../adr/0012-filecloud-acl-authoritative.md` |
 | Encryption | TLS to Entra and to Graph, where Graph is used |
-| Input validation | Claims validated for presence and shape. Entitlements are fully-qualified `(department, sub_department)` pairs, never bare names |
-| Output validation | A truncated `groups` claim is **never** silently accepted. Detect overage; resolve or fail closed loudly |
-| Logging | Token validation outcomes, overage events, context-construction failures |
+| Input validation | Claims validated for presence and shape. The `oid` is the canonical principal key — **never the email address**, which is mutable and reassignable → `../adr/0013-principal-mapping.md` |
+| Output validation | An Entra identity with no active `principal_map` entry resolves to **zero grants**, never a best-effort match |
+| Logging | Token validation outcomes, unmapped-principal events, context-construction failures |
 | Failure behavior | Entra unreachable → deny. Degraded identity never means degraded authorization |
 
 ### 7. RAG Service
@@ -130,12 +130,12 @@ becomes invisible.
 | | |
 |---|---|
 | Authentication | Ingestion uses a dedicated read-only service account. Baseline pending → `../baselines/filecloud-service-account.md` (not yet written) |
-| Authorization | **Authoritative for document permissions.** Whether the path-derived tier or the ACL wins on conflict is **OPEN** → `../adr/0002-acl-source-of-truth.md` |
+| Authorization | **Authoritative for document permissions — resolved.** The ACL wins; the path-derived tier is retired as an access control → `../adr/0012-filecloud-acl-authoritative.md`. FileCloud is not in the query path; a synchronized projection is |
 | Encryption | TLS for API and client traffic |
 | Input validation | Ingestion treats all document content as untrusted input — including anything resembling an instruction |
 | Output validation | Extracted ACLs and metadata validated before they become authorization data |
 | Logging | Sync runs, change detection, ACL drift, reconciliation outcomes |
-| Failure behavior | Sync failure → the index goes stale, and stale is a security state. Reconciliation lag is the window in which a tightened ACL is unenforced → `../adr/0002-acl-source-of-truth.md` |
+| Failure behavior | Sync failure → the projection goes stale, and stale is a **security** state, not an operational one. Staleness is the window in which a revoked user still reads. Partial sync must not commit — a partially expanded group is silently wrong with nothing in the data to show it → `../adr/0012-filecloud-acl-authoritative.md` |
 
 ### 10. External AI / LLM services
 

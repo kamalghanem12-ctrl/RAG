@@ -87,17 +87,21 @@ Entra truncates the `groups` claim beyond roughly 150–200 group memberships, s
 `_claim_names` / `_claim_sources` pointer to Microsoft Graph. At Derayah's scale this threshold
 will be crossed.
 
-The failure is dangerous because of its *direction*: an API reading `groups` naively sees **fewer**
-entitlements than the user actually holds. That fails closed for Restricted content, so it presents
-as a permissions bug rather than a security one — and is therefore likely to be "fixed" badly, and
-quickly, under delivery pressure.
+The failure is dangerous because of its *direction*: reading `groups` naively sees **fewer**
+memberships than the user actually holds. That fails closed, so it presents as a permissions bug
+rather than a security one — and is therefore likely to be "fixed" badly, and quickly, under
+delivery pressure.
 
-Required behavior: detect the overage indicator and resolve membership via Graph server-side, or
-fail closed loudly. Never trust a truncated claim silently.
-→ `tests/authz/test_groups_overage.py`
+**Revised by `../adr/0012-filecloud-acl-authoritative.md`.** The request path no longer reads this
+claim at all. Entra establishes identity; FileCloud decides document access; group membership is
+resolved by **pre-expansion during ACL synchronization**, not from the token. The API needs one
+value: the caller's `oid`, mapped through `principal_map`.
 
-Carrying `restricted_entitlements` as Entra **app roles** avoids the problem entirely and is the
-recommendation. → `../adr/0009-entitlement-claims.md`
+The failure mode did not disappear — it **moved to the expansion step**, where the rule is
+complete-or-fail rather than best-effort. A partially expanded group silently narrows access exactly
+as a truncated claim would have.
+→ `tests/authz/test_groups_overage.py`, retained and re-aimed at expansion
+→ `../adr/0013-principal-mapping.md`
 
 ### Also required
 

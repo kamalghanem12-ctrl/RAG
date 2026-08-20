@@ -72,9 +72,16 @@ the edit — that is intentional, not a bug to work around.
 2. **The retrieval predicate lives in exactly one place** — `authz/`, expressed as SQL, enforced
    under RLS. Never reimplement it in Python, and never in a prompt.
    Full statement: `docs/architecture/02-authorization-model.md`.
-3. **Never trust client-supplied authorization values.** `department`, `sub_department`,
-   `security_tier`, `allowed_groups`, `allowed_users`, `roles`, `permissions` are derived
-   server-side from validated identity. Reading them off a request body is *blocked*.
+   **Entra authenticates; FileCloud decides document access.** The PostgreSQL ACL projection is a
+   synchronized cache of FileCloud's decision and never an independent authority — when they
+   disagree, FileCloud is right and the projection is stale.
+   See `docs/adr/0012-filecloud-acl-authoritative.md`.
+3. **Never trust client-supplied authorization values.** `principal_id`,
+   `filecloud_principal_id`, grant fields, and any `exception_*` field are derived server-side from
+   validated identity or the governed exception store. Reading them off a request body is *blocked*.
+   `department`, `sub_department`, and `security_tier` are now **metadata** — permissible as
+   client-supplied *narrowing* business filters, never as authorization, and a filter may only
+   reduce the authorized result set. See `docs/adr/0012-filecloud-acl-authoritative.md`.
 4. **Never retrieve then filter.** Unauthorized rows must not be fetched and discarded in
    application memory. Filtering after retrieval is *blocked*.
 5. **Request-scoped DB context uses `SET LOCAL` inside an explicit transaction.** Session-scoped

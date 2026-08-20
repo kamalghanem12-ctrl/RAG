@@ -1,7 +1,21 @@
 # ADR-0010 — Entitlement Invariants
 
-**Status:** Proposed — **needs Derayah security review**
-**Blocks:** Phase 2
+**Status:** **Moot** under `0012-filecloud-acl-authoritative.md`
+**Blocks:** nothing
+
+> **Why moot.** This ADR asked whether a user may hold a Restricted entitlement for
+> `(Commercial, Sales)` without holding Commercial department access — a state the old predicate made
+> reachable and which was almost certainly unintended.
+>
+> ADR-0012 retires department and sub-department entitlements entirely. Authorization is a set of
+> per-document grants projected from FileCloud, so there is no parent-child entitlement relationship
+> left to be violated. The unpaired state cannot be constructed.
+>
+> Retained for the record, and because the *class* of defect it describes is worth remembering: a
+> reachable state that no test would generate, because nobody writes a test for a case they assume
+> cannot happen. `tests/authz/test_entitlement_invariants.py` is retired with this ADR; the
+> equivalent question under the new model — can a grant exist for a principal with no valid mapping —
+> is asserted by `tests/authz/test_principal_mapping.py`.
 
 ## Context
 

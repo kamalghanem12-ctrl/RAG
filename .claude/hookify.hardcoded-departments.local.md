@@ -18,22 +18,28 @@ Under `src/`, a department name in a string literal means the org chart has been
 application.
 
 **Why it matters:** departments and sub-departments change — they merge, split, and get renamed —
-and each change then becomes a code change, a review, a deployment. Worse, a branch keyed on a
-department name is authorization logic that lives outside the single predicate, so it drifts
-silently and is not covered by `tests/authz/`.
+and each change then becomes a code change, a review, a deployment.
 
-**Instead:** departments are data. They arrive in the authorization context, derived from validated
-identity, and are compared by the predicate in `src/derayah_rag/authz/` — never by an `if` in a
-handler.
+**Note what changed.** Under `docs/adr/0012-filecloud-acl-authoritative.md`, departments are
+**metadata**, not authorization — access comes from the FileCloud ACL projection. So a department
+literal is no longer *automatically* an authorization bug.
+
+It is still worth flagging, and one case is worse than before: a branch keyed on a department name
+that affects **what a user can see** is now authorization logic living outside the predicate *and*
+outside the model — invisible to `tests/authz/` and to RLS both. Under the old model such a branch at
+least spoke the same vocabulary as the predicate. Now it speaks none.
 
 ```python
-# not this
-if ctx.department == "Commercial":
-    ...
+# fine — metadata filter, narrows an already-authorized result set
+stmt = select(Chunk).where(authorized(ctx)).where(Chunk.department == requested_dept)
 
-# this
-stmt = select(Chunk).where(authorized(ctx))
+# not fine — a visibility decision made outside the predicate
+if ctx.department == "Commercial":
+    stmt = select(Chunk)          # authorization skipped entirely
 ```
+
+The distinction to check: does this literal **narrow** results, or does it **decide** them? Narrowing
+is a filter. Deciding is authorization, and authorization lives in one place.
 
 This is a warning, not a block, because fixtures and migrations legitimately name departments. If
 this fired in `tests/` or a seed script, it is a false positive — but check that it is really one.

@@ -81,14 +81,55 @@ Under C: the shim carries an MSAL dependency and two acquisition paths. Revocati
 between them — broker-held tokens follow the PRT lifecycle, PKCE refresh tokens follow the
 application's. Both must satisfy the revocation gate.
 
-## VERIFY before ratification
+## VERIFY status
+
+### RESOLVED 2026-08-21 — MSAL Python broker
+
+Verified against Microsoft Learn. Sources at the end of this section.
+
+| Question | Answer |
+|---|---|
+| Availability | **Windows 10 and above, and Windows Server 2019 and above.** MSAL.NET documents the floor more precisely as Windows 10 version 1703 (Creators Update) |
+| Package | `pip install "msal[broker]>=1.20,<2"` — broker support is an extra, not in core MSAL |
+| Enabling it | `PublicClientApplication(..., enable_broker_on_windows=True)` |
+| Architectures | x64, x86, ARM64 |
+| Silent acquisition | `acquire_token_interactive` **attempts silently first** when the Windows signed-in state is still valid, and only prompts when necessary. `prompt="select_account"` forces a prompt |
+| Fallback | **MSAL falls back to a browser automatically** where WAM cannot be used |
+
+Three findings that change the design rather than merely confirming it:
+
+**A broker-specific redirect URI is mandatory.** The app registration must carry
+`ms-appx-web://microsoft.aad.brokerplugin/<CLIENT_ID>`. Without it the broker fails with a
+`broker_error` / `Status_ApiContractViolation` that does not obviously name the cause. This is an
+Entra app-registration configuration item and belongs in `../baselines/entra-app-registration.md`,
+which does not yet exist.
+
+**MSAL's browser fallback is automatic, which strengthens Option C.** The recommendation below
+described PKCE fallback as something to build. In practice MSAL already falls back to a browser when
+WAM is unavailable, so Option C is closer to MSAL's default behaviour than to a second code path
+written by hand. That lowers the cost of covering the excluded non-domain-joined laptops.
+
+**AD FS and Azure AD B2C authorities are not supported by WAM** — MSAL falls back to a browser for
+those. Not expected to apply here, since Derayah authenticates against Entra directly, but it would
+silently change the experience if a federated authority were introduced later.
+
+**Refresh tokens are device-bound and not accessible to the application.** This confirms the claim
+in the Option A description above — there is genuinely no token for the shim to persist, and it is a
+stronger property than "the shim chooses not to store one".
+
+### Still unresolved — blocks ratification
 
 ```
 VERIFY: current Claude Desktop support for remote MCP servers and its OAuth behavior
         — against official Anthropic MCP documentation
-VERIFY: MSAL Python broker (pymsalruntime) availability, supported Windows versions,
-        and PRT-based silent acquisition — against Microsoft identity platform documentation
 VERIFY: current MCP authorization specification revision — against the official MCP spec
 ```
 
-None of the above may be asserted from memory. An unresolved marker blocks ratification.
+Both are Anthropic/MCP-side and cannot be answered from Microsoft documentation. Neither may be
+asserted from memory. An unresolved marker blocks ratification.
+
+### Sources
+
+- [Using MSAL Python with Web Account Manager](https://learn.microsoft.com/entra/msal/python/advanced/wam) — retrieved 2026-08-21
+- [Desktop app that calls web APIs: acquire a token by using WAM](https://learn.microsoft.com/entra/identity-platform/scenario-desktop-acquire-token-wam) — retrieved 2026-08-21
+- [Using MSAL.NET with Web Account Manager](https://learn.microsoft.com/entra/msal/dotnet/acquiring-tokens/desktop-mobile/wam) — retrieved 2026-08-21

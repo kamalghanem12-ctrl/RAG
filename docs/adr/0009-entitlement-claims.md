@@ -80,13 +80,81 @@ roles is a question for the identity owners.
   names. → `tests/authz/test_entitlement_qualification.py`
 - The client never supplies any of this. → `../architecture/07-api.md`
 
-## VERIFY before ratification
+## VERIFY — RESOLVED 2026-08-21
 
-```
-VERIFY: current Entra group-claim overage thresholds for JWT and SAML, and the exact
-        overage indicator structure — against Microsoft identity platform documentation
-VERIFY: app role claim behavior, limits, and whether app roles are subject to any
-        equivalent overage — against Microsoft identity platform documentation
+Both markers are closed against Microsoft Learn. The "roughly 150–200" figure used above was
+approximate; the real numbers are below and supersede it.
+
+### Overage thresholds
+
+| Token type | Limit |
+|---|---|
+| JWT | **200** groups |
+| SAML | **150** groups |
+| Implicit flow | **6** groups |
+
+### Overage indicator structure
+
+JWT and SAML omit `groups` entirely and substitute:
+
+```json
+{
+  "_claim_names":   { "groups": "src1" },
+  "_claim_sources": { "src1": { "endpoint": "<url to get this user's group membership>" } }
+}
 ```
 
-The 150–200 figure above is approximate and must not be relied on as stated. Resolve the marker.
+Implicit flow is different in shape, not just in threshold: it emits a boolean `hasgroups: true`
+with **no endpoint hint at all**. SAML carries the pointer as a
+`http://schemas.microsoft.com/claims/groups.link` attribute claim. Code that checks only for
+`_claim_names` misses the implicit-flow case.
+
+### The finding that matters most, and was not in this ADR
+
+**The `_claim_sources` endpoint may still point at the legacy Azure AD Graph** (`graph.windows.net`),
+which breaks if legacy endpoints are blocked — and they increasingly are. Microsoft's guidance is
+explicit: applications **must not rely on the value** of the overage claim, only on its **presence**,
+and must construct their own Microsoft Graph call.
+
+That inverts the naive implementation. The endpoint handed to you in the token is not the endpoint to
+call. Use `getMemberObjects` with `{"securityEnabledOnly": false}`, or `transitiveMemberOf` for
+direct plus transitive membership.
+
+### App roles
+
+**Confirmed: app roles are not subject to the group-overage mechanism.** This was the central claim
+in the recommendation above and it holds.
+
+Limits, which the ADR asked about and did not know:
+
+- **1,200 total entries** across *all* application-manifest collections combined — `appRoles`,
+  `keyCredentials`, `identifierUris`, `redirectUris`, `requiredResourceAccess`,
+  `oauth2PermissionScopes`. App roles compete with redirect URIs and API permissions for one shared
+  budget, so "a role per entitlement" has a ceiling that is lower than it looks.
+- **1,500 app role assignments** per user, group, or service principal, across all app roles —
+  including assignments where the resource service principal has been soft-deleted.
+
+Two operational gotchas that would have presented as "roles don't work":
+
+- Roles must be assigned under **Enterprise applications → Users and groups**. Defining them on the
+  app registration alone does not activate them.
+- `roles` must be added as an **optional claim** in Token configuration to be emitted.
+- If a **service principal** is added to a group and the app role is assigned to that group, Entra
+  does **not** emit the `roles` claim. Group-assigned roles work for users, not for service
+  principals.
+
+### Group filtering is a weaker mitigation than it appears
+
+The documented way to stay under the limit is to emit only "Groups assigned to the application". But
+that option **does not support indirect membership** — only groups the user is a *direct* member of —
+and it requires Microsoft Entra ID P1. Under ADR-0013 this matters: a filtered claim would
+under-report nested membership, which is the same silent narrowing by another route.
+
+### Sources
+
+- [ID token claims reference — groups overage claim](https://learn.microsoft.com/entra/identity-platform/id-token-claims-reference#groups-overage-claim) — retrieved 2026-08-21
+- [Access token claims reference — payload claims](https://learn.microsoft.com/entra/identity-platform/access-token-claims-reference#payload-claims) — retrieved 2026-08-21
+- [Configure group claims and app roles in tokens](https://learn.microsoft.com/security/zero-trust/develop/configure-tokens-group-claims-app-roles#group-overages) — retrieved 2026-08-21
+- [Add app roles to your application](https://learn.microsoft.com/entra/identity-platform/howto-add-app-roles-in-apps) — retrieved 2026-08-21
+- [Microsoft Entra service limits and restrictions](https://learn.microsoft.com/entra/identity/users/directory-service-limits-restrictions#overview) — retrieved 2026-08-21
+- [Understand the app manifest — manifest limits](https://learn.microsoft.com/entra/identity-platform/reference-microsoft-graph-app-manifest#common-issues) — retrieved 2026-08-21

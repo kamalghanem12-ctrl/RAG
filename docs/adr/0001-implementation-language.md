@@ -41,9 +41,23 @@ own ADR — but not before Phase 9, and not without measuring the actual pain.
 - BGE-M3 runs in-process or as a local service without a language boundary.
 - The shim ships to Windows and needs a packaging story regardless of language — see ADR-0003.
 
-## VERIFY before ratification
+## VERIFY status
+
+### RESOLVED 2026-08-21 — MSAL Python broker on Windows
+
+Python is viable for the shim's authentication path. WAM broker support exists in MSAL Python via the
+`msal[broker]` extra, on Windows 10+ and Windows Server 2019+, across x64/x86/ARM64, with automatic
+browser fallback where the broker is unavailable.
+
+One requirement this adds to the app registration rather than the code: a broker-specific redirect
+URI, `ms-appx-web://microsoft.aad.brokerplugin/<CLIENT_ID>`.
+
+Full findings and sources: `0003-authentication-flows.md`.
+
+### Still unresolved — blocks ratification
 
 ```
 VERIFY: current Python MCP SDK support for the client/shim role — against official MCP documentation
-VERIFY: MSAL Python broker support on Windows (pymsalruntime) — against Microsoft identity platform docs
 ```
+
+Anthropic/MCP-side; not answerable from Microsoft documentation.

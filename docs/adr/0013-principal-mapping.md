@@ -105,15 +105,42 @@ investigated.
 - What is the acceptable lag for a **group membership** change, as distinct from an ACL change? A
   departure that removes someone from a group is a revocation and may warrant a tighter SLA.
 
-## VERIFY before ratification
+## VERIFY status
+
+### RESOLVED 2026-08-21 — Entra membership enumeration
+
+Full detail and sources in `0009-entitlement-claims.md`. What bears on the expansion design here:
+
+**Use `transitiveMemberOf` or `getMemberObjects`, not the endpoint in the token.** Microsoft's
+guidance is that an application must not rely on the *value* of `_claim_sources` — only its presence
+— because that endpoint may still reference the legacy Azure AD Graph (`graph.windows.net`), which
+breaks where legacy endpoints are blocked. The sync service must construct its own Microsoft Graph
+call.
+
+`transitiveMemberOf` matters specifically for this ADR: expansion must be **transitive**, and Graph
+exposes direct-and-transitive membership as a first-class query rather than something to compute by
+walking nested groups. That removes the cycle-termination problem from our code and puts it in
+Graph's.
+
+**Group filtering is not an available shortcut.** The documented mitigation for large memberships —
+emitting only "Groups assigned to the application" — **does not support indirect membership**, and
+requires Entra ID P1. Under this ADR that would under-report nested membership, which is the same
+silent narrowing this ADR exists to prevent. Do not reach for it.
+
+**Confirmed thresholds:** 200 groups for JWT, 150 for SAML, 6 for implicit flow. The overage indicator
+differs in shape by flow: `_claim_names`/`_claim_sources` for JWT and SAML, a bare boolean
+`hasgroups: true` with no endpoint hint for implicit flow. Since the request path under this ADR
+reads no groups claim at all, these numbers are now a *sync-path* constraint on how membership is
+paged and retried — not a request-path one.
+
+### Still unresolved — blocks ratification
 
 ```
 VERIFY: FileCloud principal model and group semantics at the deployed version, including nested
         group support and whether the API exposes expanded membership or only direct members
         — against FileCloud official documentation
-VERIFY: current Entra group-claim overage thresholds and indicator structure — retained from
-        ADR-0009 because the expansion path must still handle large memberships correctly
-        — against Microsoft identity platform documentation
 ```
 
-The second marker is now resolvable — Microsoft Learn is available to this project.
+This is the one that decides how much work expansion actually is. If FileCloud exposes only direct
+members, the sync service must resolve nesting itself on the FileCloud side as well as the directory
+side. Blocked on the deployed FileCloud version — see `../baselines/filecloud.md`, open finding #1.
